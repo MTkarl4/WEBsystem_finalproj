@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ecowatch</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #fcfcfc;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .quiz-nav {
+            width: 100%;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .tab-btn {
+            padding: 6px 14px;
+            border: 2px solid #4CAF50;
+            background: #fff;
+            color: #333;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        .tab-btn.result-tab {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+            display: none;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1400px;
+            padding: 40px 60px;
+            flex-grow: 1;
+        }
+
+        .page-panel {
+            display: none;
+        }
+
+        .page-panel.active {
+            display: block;
+        }
+
+        .question-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            color: #444;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 1100px;
+        }
+
+        .option-card {
+            background-color: #e9e9e9;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 22px 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .option-card:hover {
+            background-color: #dfdfdf;
+        }
+
+        .option-card.correct {
+            background-color: #00B2E3;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .option-card.correct::before {
+            content: "✓";
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background-color: #ffffff;
+            color: #00B2E3;
+            border-radius: 50%;
+            margin-right: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .next-trigger {
+            margin-top: 40px;
+            padding: 12px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .next-trigger:hover {
+            background-color: #7da319;
+        }
+
+        .results-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 20px;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 300px;
+            height: 150px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .gauge-arc {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            border: 18px solid #e9e9e9;
+            border-radius: 50%;
+            box-sizing: border-box;
+        }
+
+        .gauge-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            border: 18px solid #4CAF50;
+            border-radius: 50%;
+            box-sizing: border-box;
+            border-bottom-color: transparent !important;
+            border-left-color: transparent !important;
+            transform: rotate(-135deg);
+            transition: transform 0.8s ease-out;
+        }
+
+        .gauge-score-text {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #000;
+        }
+
+        .score-statement {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .congrats-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 40px;
+        }
+
+        .action-btn {
+            padding: 12px 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn {
+            background-color: #5cb85c;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .reset-btn:hover {
+            background-color: #4cae4c;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div id="menu-overlay" class="menu-overlay"></div>
+
+        <div id="mega-menu" class="mega-menu">
+            <div class="menu-content-container">
+                <div class="menu-section menu-header-block">
+                    <h2 class="menu-title"><span class="underline-box">Explore</span> our site</h2>
+                    <p class="menu-description">Find out how to make use of your knowledge you get from here to the environment</p>
+                </div>
+
+                <div class="menu-separator-line"></div>
+
+                <div class="menu-section">
+                    <h3><a href="index.html#articles-section"><span class="underline-box">Articles</span></a></h3>
+                </div>
+
+                <div class="menu-section">
+                    <h3><a href="index.html#latest-happening-section"><span class="underline-box">Latest Solutions</span></a></h3>
+                </div>
+
+                <div class="menu-section">
+                    <h3><a href="index.html#help-info-section"><span class="underline-box no-underline">Help and Information</span></a></h3>
+                </div>
+            </div>
+        </div>
+
+    <nav class="nav-head">
+        <div class="container nav-container">
+            <div class="nav-brand">
+                <button id="menuToggle" class="burger-trigger">☰</button>
+                <img src="logo.jpg" alt="EcoWatch Logo" class="logo-image">
+                <span class="brand-name">ecowatch</span>
+            </div>
+
+            <div class="nav-menu" style="position: relative;">
+                <a href="index.html" class="nav-icon-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#95C11F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </a>
+                <a href="javascript:void(0)" class="nav-button" id="causesDropdownBtn">CAUSES AND EFFECTS</a>
+                <a href="javascript:void(0)" class="nav-button" id="solutionsDropdownBtn">SOLUTIONS</a>
+                <a href="javascript:void(0)" class="nav-button" id="lessonsDropdownBtn">LESSONS</a>
+
+
+                <div class="dropdown-panel-board" id="causesDropdownPanel">
+                    <h3 class="panel-header-title">The Causes and their Effects:</h3>
+                        <ul class="dropdown-links-list">
+                            <li><a href="cepage1.html" class="accent-link">Plastic Pollution</a></li>
+                            <li><a href="cepage2.html" class="accent-link">Biodiversity Loss and Ecological Instability</a></li>
+                            <li><a href="cepage3.html" class="accent-link">Air Pollution</a></li>
+                            <li><a href="cepage4.html" class="accent-link">Wildfires and Deforestation</a></li>
+                            <li><a href="cepage5.html" class="accent-link">Water Contamination</a></li>
+                        </ul>
+                </div>
+
+                <div class="dropdown-panel-board" id="solutionsDropdownPanel">
+                    <h3 class="panel-header-title">Our Environmental Solutions:</h3>
+                        <ul class="dropdown-links-list">
+                            <li><a href="spage1.html" class="accent-link">Innovative Strategies for Countering Global Plastic Growth</a></li>
+                            <li><a href="spage2.html" class="accent-link">A Nature-Positive Strategy</a></li>
+                            <li><a href="spage3.html" class="accent-link">Air Conservation</a></li>
+                            <li><a href="spage4.html" class="accent-link">Safety Measures Prevention</a></li>
+                            <li><a href="spage5.html" class="accent-link">Countermeasures for Decontamination</a></li>
+                        </ul>
+                </div>
+
+                <div class="dropdown-panel-board" id="lessonsDropdownPanel">
+                    <h3 class="panel-header-title">Educational Lessons:</h3>
+                        <ul class="dropdown-links-list">
+                            <li><a href="lpage1.html" class="accent-link">Lesson 1: Plastic Pollution</a></li>
+                            <li><a href="lpage2.html" class="accent-link">Lesson 2: Biodiversity</a></li>
+                            <li><a href="lpage3.html" class="accent-link">Lesson 3: Air Pollution</a></li>
+                            <li><a href="lpage4.html" class="accent-link">Lesson 4: Wildfires and Deforestation</a></li>
+                            <li><a href="lpage5.html" class="accent-link">Lesson 5: Water Contamination</a></li>
+                        </ul>
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    <div class="dropdown-backdrop-overlay" id="dropdownOverlay"></div>
+    
+    </header>
+
+    <div class="quiz-nav" id="tabsBar">
+        <button class="tab-btn active" onclick="jumpToQuestion(0)">Q1</button>
+        <button class="tab-btn" onclick="jumpToQuestion(1)">Q2</button>
+        <button class="tab-btn" onclick="jumpToQuestion(2)">Q3</button>
+        <button class="tab-btn" onclick="jumpToQuestion(3)">Q4</button>
+        <button class="tab-btn" onclick="jumpToQuestion(4)">Q5</button>
+        <button class="tab-btn result-tab" id="resultTab" onclick="showResultsPage()">Result Page</button>
+    </div>
+
+    <div class="main-container">
+        
+        <div id="questionsContainer"></div>
+
+        <div id="resultsPanel" class="page-panel">
+            <div class="results-wrapper">
+
+                <div class="score-statement" id="scoreStatement">You have scored 0%.</div>
+                <div class="congrats-text" id="congratsText">Congratulations, you have passed the lesson.</div>
+
+                <button class="action-btn reset-btn" onclick="resetQuiz()">Reset</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        
+        const menuBtn = document.getElementById('menuToggle');
+        const megaMenu = document.getElementById('mega-menu');
+        const menuOverlay = document.getElementById('menu-overlay');
+
+        if (menuBtn && megaMenu && menuOverlay) {
+            menuBtn.addEventListener('click', function(e) {
+                e.stopPropagation(); 
+                menuBtn.classList.toggle('active');
+                megaMenu.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+            });
+
+            document.querySelectorAll('.mega-menu a').forEach(link => {
+                link.addEventListener('click', () => {
+                    closeMegaMenu();
+                });
+            });
+        }
+
+        function closeMegaMenu() {
+            if (menuBtn) menuBtn.classList.remove('active');
+            if (megaMenu) megaMenu.classList.remove('active');
+            if (menuOverlay) menuOverlay.classList.remove('active');
+        }
+
+        const menus = [
+            {
+                btn: document.getElementById("causesDropdownBtn"),
+                panel: document.getElementById("causesDropdownPanel")
+            },
+            {
+                btn: document.getElementById("solutionsDropdownBtn"),
+                panel: document.getElementById("solutionsDropdownPanel")
+            },
+            {
+                btn: document.getElementById("lessonsDropdownBtn"),
+                panel: document.getElementById("lessonsDropdownPanel")
+            }
+        ];
+
+        const overlay = document.getElementById("dropdownOverlay");
+
+        function closeAllMenus() {
+            menus.forEach(item => {
+                if (item.panel) item.panel.classList.remove("show-menu");
+            });
+            if (overlay) overlay.classList.remove("show-overlay");
+        }
+
+        menus.forEach(item => {
+            if (item.btn && item.panel) {
+                item.btn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isOpen = item.panel.classList.contains("show-menu");
+                    closeAllMenus();
+                    if (!isOpen) {
+                        item.panel.classList.add("show-menu");
+                        if (overlay) overlay.classList.add("show-overlay");
+                    }
+                });
+            }
+        });
+
+        if (overlay) {
+            overlay.addEventListener("click", closeAllMenus);
+        }
+
+        window.addEventListener("click", (e) => {
+            // A. Handle your dropdown panels click-away closing
+            const clickedInsideAMenu = menus.some(item => item.panel && item.panel.contains(e.target));
+            const clickedAMenuButton = menus.some(item => item.btn && item.btn === e.target);
+
+            if (!clickedInsideAMenu && !clickedAMenuButton) {
+                closeAllMenus();
+            }
+
+            if (megaMenu && megaMenu.classList.contains('active')) {
+                if (!megaMenu.contains(e.target) && e.target !== menuBtn) {
+                    closeMegaMenu();
+                }
+            }
+        });
+
+        const quizData = [
+            {
+                question: "Which of the following is mentioned in the text as a human cause of wildfires?",
+                options: ["A) Excessive rainfall in tropical rainforests.",
+                          "B) Volcanic eruptions and extreme heatwaves.",
+                          "C) Lightning strikes during heavy rainstorms.",
+                          "D) Campfires left unattended or not put out properly."],
+                correct: 3
+            },
+            {
+                question: "According to the text, what are the two main consequences of deforestation?",   
+                options: ["A) Increased rainfall and a surplus of animal habitats.",
+                          "B) Faster plant growth and an increase in global oxygen levels.", 
+                          "C) Extinction of flora and fauna, biodiversity loss, and a decrease in oxygen generation.",
+                          "D) A sudden rise in the population of migrating animal species."],
+                correct: 2
+            },
+            {
+                question: "In addition to being mindful of cigarette disposal and equipment checks, how should campfires be handled?",
+                options: ["A) They must be attended constantly or put out properly.", 
+                          "B) They should only be used in areas going through deforestation.", 
+                          "C) They should be built as close to dry trees as possible.", 
+                          "D) They should be left to burn out on their own overnight."],
+                correct: 0
+            },
+            {
+                question: "What solution does the text provide to prevent wildfires caused by equipment use?",
+                options: ["A) Perform proper maintenance and check the equipment before using it.", 
+                          "B) Stop using all mechanical equipment permanently.", 
+                          "C) Only use equipment during the short winter months.", 
+                          "D) Leave the equipment unattended while it is running."],
+                correct: 0
+            },
+            {
+                question: "What does the text suggest we do to restore lost biodiversity caused by deforestation?",
+                options: ["A) Let wildfires burn naturally without trying to put them out.", 
+                          "B) Clear out more land for industrial use and equipment testing.", 
+                          "C) Conserve forests, replant trees, and gather surviving seeds and saplings.", 
+                          "D) Move all remaining wild animals to artificial urban zoos."],
+                correct: 2
+            }
+        ];
+
+        let userAnswers = new Array(quizData.length).fill(null);
+        let currentIdx = 0;
+        let isSubmitted = false;
+
+        window.buildQuizStructure = function() {
+            const container = document.getElementById('questionsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            quizData.forEach((item, qIdx) => {
+                const panel = document.createElement('div');
+                panel.className = `page-panel ${qIdx === 0 ? 'active' : ''}`;
+                panel.id = `question-panel-${qIdx}`;
+
+                panel.innerHTML = `
+                    <div class="question-title">Question ${qIdx + 1}</div>
+                    <div class="question-text">${item.question}</div>
+                    <div class="options-list">
+                        ${item.options.map((opt, oIdx) => `
+                            <div class="option-card" 
+                                 id="opt-${qIdx}-${oIdx}" 
+                                 onclick="selectOption(${qIdx}, ${oIdx})">
+                                ${opt}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="next-trigger" onclick="handleNextClick(${qIdx})">
+                        ${qIdx === quizData.length - 1 ? 'Submit Quiz' : 'Next Question'}
+                    </button>
+                `;
+                container.appendChild(panel);
+            });
+        };
+
+        window.selectOption = function(qIdx, oIdx) {
+            if (isSubmitted) return;
+
+            userAnswers[qIdx] = oIdx;
+
+            quizData[qIdx].options.forEach((_, idx) => {
+                const el = document.getElementById(`opt-${qIdx}-${idx}`);
+                if (el) el.classList.remove('correct');
+            });
+
+            const selectedEl = document.getElementById(`opt-${qIdx}-${oIdx}`);
+            if (selectedEl) selectedEl.classList.add('correct');
+        };
+
+        window.handleNextClick = function(qIdx) {
+            if (qIdx === quizData.length - 1) {
+                evaluateAndCalculateScore();
+            } else {
+                jumpToQuestion(qIdx + 1);
+            }
+        };
+
+        window.jumpToQuestion = function(targetIdx) {
+            currentIdx = targetIdx;
+            
+            document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+            const resPanel = document.getElementById('resultsPanel');
+            if (resPanel) resPanel.classList.remove('active');
+
+            const targetPanel = document.getElementById(`question-panel-${targetIdx}`);
+            if (targetPanel) targetPanel.classList.add('active');
+            updateTabHighlighting(targetIdx);
+        };
+
+        function updateTabHighlighting(activeIdx) {
+            const buttons = document.querySelectorAll('#tabsBar .tab-btn');
+            buttons.forEach((btn, idx) => {
+                if (idx === activeIdx) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function evaluateAndCalculateScore() {
+            isSubmitted = true;
+            let correctCounter = 0;
+
+            quizData.forEach((item, qIdx) => {
+                const chosen = userAnswers[qIdx];
+                
+                item.options.forEach((_, oIdx) => {
+                    const el = document.getElementById(`opt-${qIdx}-${oIdx}`);
+                    if (el) el.classList.remove('correct');
+                });
+
+                const correctCard = document.getElementById(`opt-${qIdx}-${item.correct}`);
+                if (correctCard) correctCard.classList.add('correct');
+
+                if (chosen === item.correct) {
+                    correctCounter++;
+                }
+            });
+
+            const scorePercentage = Math.round((correctCounter / quizData.length) * 100);
+            
+            const resTab = document.getElementById('resultTab');
+            if (resTab) resTab.style.display = 'inline-block';
+            showResultsPage(scorePercentage);
+        }
+
+        function showResultsPage(percentageValue) {
+            if (percentageValue === undefined) {
+                let count = 0;
+                quizData.forEach((item, idx) => { if(userAnswers[idx] === item.correct) count++; });
+                percentageValue = Math.round((count / quizData.length) * 100);
+            }
+
+            document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+            const resPanel = document.getElementById('resultsPanel');
+            if (resPanel) resPanel.classList.add('active');
+
+            const buttons = document.querySelectorAll('#tabsBar .tab-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            
+            const resTab = document.getElementById('resultTab');
+            if (resTab) resTab.classList.add('active');
+
+            const scoreStmt = document.getElementById('scoreStatement');
+            if (scoreStmt) scoreStmt.innerText = `You have scored ${percentageValue}%.`;
+            
+            const congratsTxt = document.getElementById('congratsText');
+            if (congratsTxt) {
+                if (percentageValue >= 60) {
+                    congratsTxt.innerText = "Congratulations, you have passed the lesson.";
+                } else {
+                    congratsTxt.innerText = "You did not pass. Please reset and try again.";
+                }
+            }
+        }
+
+        window.resetQuiz = function() {
+            isSubmitted = false;
+            userAnswers = new Array(quizData.length).fill(null);
+            const resTab = document.getElementById('resultTab');
+            if (resTab) resTab.style.display = 'none';
+            buildQuizStructure();
+            jumpToQuestion(0);
+        };
+        buildQuizStructure();
+    });
+</script>
+    
+</body>
+</html>
